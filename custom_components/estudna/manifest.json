@@ -1,0 +1,19 @@
+{
+  "domain": "estudna",
+  "name": "eStudna",
+  "documentation": "https://github.com/nijel/hass-estudna",
+  "issue_tracker": "https://github.com/nijel/hass-estudna/issues",
+  "dependencies": [],
+  "codeowners": [
+    "@nijel"
+  ],
+  "version": "0.1.0",
+  "requirements": [
+    "requests",
+    "PyJWT[crypto]"
+  ],
+  "iot_class": "cloud_polling",
+  "config_flow": true,
+  "loggers": [
+  ]
+}
