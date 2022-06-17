@@ -1,4 +1,4 @@
-"""eStudna component for Home Assistant."""
+"""eSTUDNA component for Home Assistant."""
 import time
 from functools import partial
 from typing import Dict, Optional

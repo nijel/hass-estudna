@@ -1,4 +1,4 @@
-# eStudna integration for Home Assistant
+# eSTUDNA integration for Home Assistant
 
 ## How to use
 
@@ -10,5 +10,5 @@
 
 4. Configure the integration
 
-Search for **eStudna** in the **Integrations** section of Home Assistant.
+Search for **eSTUDNA** in the **Integrations** section of Home Assistant.
 

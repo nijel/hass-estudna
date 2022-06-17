@@ -1,4 +1,4 @@
-"""Config flow for eStudna integration."""
+"""Config flow for eSTUDNA integration."""
 from functools import partial
 
 import voluptuous as vol
