@@ -8,6 +8,13 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from .const import DOMAIN
 from .estudna import ThingsBoard
 
+STEP_USER_DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_USERNAME): str,
+        vol.Required(CONF_PASSWORD): str,
+    }
+)
+
 
 class EStudnaConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -49,11 +56,6 @@ class EStudnaConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_USERNAME): str,
-                    vol.Required(CONF_PASSWORD): str,
-                }
-            ),
+            data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
         )
