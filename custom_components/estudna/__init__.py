@@ -69,7 +69,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.loop.run_in_executor(
         None, partial(tb.login, entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD])
     )
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    await hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     domain_data[uuid] = tb
     return True
 
