@@ -1,5 +1,8 @@
 # eSTUDNA integration for Home Assistant
 
+Could based integration for [eSTUDNA](https://www.estudna.cz/) utilizing
+ThingsBoard API available at https://cml.seapraha.cz/.
+
 ## How to use
 
 1. Install Home Assistant
