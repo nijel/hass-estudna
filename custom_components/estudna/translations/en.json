@@ -1,16 +1,21 @@
 {
-  "config": {
-    "error": {
-      "cannot_connect": "Failed to authenticate with the service."
-    },
-    "step": {
-      "user": {
-        "data": {
-          "username": "Username",
-          "password": "Password"
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured"
         },
-        "description": "Please enter the username and password you use to log into the CML app."
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "password": "Password",
+                    "username": "Username"
+                },
+                "description": "Please enter the username and password you use to log into the CML app."
+            }
+        }
       }
-    }
-  }
 }

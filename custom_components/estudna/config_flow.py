@@ -1,12 +1,19 @@
-"""Config flow for eSTUDNA integration."""
+"""Config flow for estudna integration."""
+import logging
 from functools import partial
+from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow
+from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
 from .estudna import ThingsBoard
+
+_LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -16,46 +23,58 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-class EStudnaConfigFlow(ConfigFlow, domain=DOMAIN):
+async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
+    """Validate the user input allows us to connect.
+
+    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
+    """
+
+    username = data[CONF_USERNAME]
+    password = data[CONF_PASSWORD]
+
+    tb = ThingsBoard()
+    try:
+        await hass.loop.run_in_executor(None, partial(tb.login, username, password))
+    except RuntimeError:
+        raise InvalidAuth
+
+
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for estudna."""
+
     VERSION = 1
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
         """Handle the initial step."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user", data_schema=STEP_USER_DATA_SCHEMA
+            )
+
         errors = {}
 
-        if user_input is not None:
-            username = user_input[CONF_USERNAME]
-            password = user_input[CONF_PASSWORD]
-
-            tb = ThingsBoard()
-            try:
-                await self.hass.loop.run_in_executor(
-                    None, partial(tb.login, username, password)
-                )
-            except RuntimeError:
-                errors["base"] = "cannot_connect"
-            else:
-                # Abort in case the host was already configured before.
-                await self.async_set_unique_id(username)
-                self._abort_if_unique_id_configured()
-
-                # Configuration data are available and no error was detected, create configuration entry.
-                return self.async_create_entry(
-                    title=username,
-                    data={CONF_USERNAME: username, CONF_PASSWORD: password},
-                )
-
-        # Show configuration form (default form in case of no user_input,
-        # form filled with user_input and eventually with errors otherwise).
-        return self._show_config_form(user_input, errors)
-
-    def _show_config_form(self, user_input=None, errors=None):
-        """Show the setup form to the user."""
-        if user_input is None:
-            user_input = {}
+        try:
+            await validate_input(self.hass, user_input)
+        except CannotConnect:
+            errors["base"] = "cannot_connect"
+        except InvalidAuth:
+            errors["base"] = "invalid_auth"
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Unexpected exception")
+            errors["base"] = "unknown"
+        else:
+            return self.async_create_entry(title="eSTUDNA", data=user_input)
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=STEP_USER_DATA_SCHEMA,
-            errors=errors,
+            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
+
+
+class CannotConnect(HomeAssistantError):
+    """Error to indicate we cannot connect."""
+
+
+class InvalidAuth(HomeAssistantError):
+    """Error to indicate there is invalid auth."""

@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from functools import partial
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous
@@ -33,10 +32,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ):
     entities = []
-    tb = hass.data[DOMAIN][config_entry.unique_id]
+    tb = hass.data[DOMAIN][config_entry.entry_id]
     devices = await hass.async_add_executor_job(tb.get_devices)
     for device in devices:
         sensor = EStudnaSensor(hass, tb, device)
-        states = await sensor.async_update()
+        await sensor.async_update()
         entities.append(sensor)
     async_add_entities(entities)

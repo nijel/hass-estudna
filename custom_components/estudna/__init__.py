@@ -1,7 +1,6 @@
 """eSTUDNA component for Home Assistant."""
-import time
 from functools import partial
-from typing import Dict, Optional
+from typing import Dict
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -63,26 +62,23 @@ class EStudnaSensor(SensorEntity):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    domain_data = hass.data.setdefault(DOMAIN, {})
+    """Set up estudna from a config entry."""
+
+    hass.data.setdefault(DOMAIN, {})
     tb = ThingsBoard()
-    uuid = entry.data[CONF_USERNAME]
     await hass.loop.run_in_executor(
         None, partial(tb.login, entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD])
     )
+    hass.data[DOMAIN][entry.entry_id] = tb
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    domain_data[uuid] = tb
+
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    unique_id = config_entry.unique_id
-
-    # Unload platforms.
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        config_entry, PLATFORMS
-    )
-
-    # Clean up.
-    # hass.data[DOMAIN].pop(unique_id).close()
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        hass.data[DOMAIN].pop(entry.entry_id).close()
 
     return unload_ok

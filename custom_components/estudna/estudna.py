@@ -10,11 +10,6 @@ from typing import Dict, Optional
 import jwt
 import requests
 
-username = "michal@cihar.com"
-password = "MfpU8^AgDrwfv*#px55n"
-sn = "SB821035"  # Serial number of your eSTUDNA
-
-
 # ----------------------------------------------------------------------------
 # --- Code
 # ----------------------------------------------------------------------------
