@@ -1,5 +1,4 @@
-"""
-CML - How to get value of water level for you eSTUDNA device
+"""CML - How to get value of water level for you eSTUDNA device
 
 2022-05-17 v1-01
 a) Project foundation
@@ -17,9 +16,7 @@ import requests
 
 
 class ThingsBoard:
-    """
-    CML ThinksBoard wrapper.
-    """
+    """CML ThinksBoard wrapper."""
 
     def __init__(self):
         self.server = "https://cml.seapraha.cz"
