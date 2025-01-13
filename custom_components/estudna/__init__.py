@@ -4,7 +4,7 @@ from functools import partial
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, LENGTH_METERS, Platform
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform, UnitOfLength
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 
@@ -57,7 +57,7 @@ class EStudnaSensor(SensorEntity):
 
     @property
     def unit_of_measurement(self) -> str:
-        return LENGTH_METERS
+        return UnitOfLength.METERS
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
