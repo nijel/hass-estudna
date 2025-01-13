@@ -36,8 +36,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     tb = ThingsBoard()
     try:
         await hass.loop.run_in_executor(None, partial(tb.login, username, password))
-    except RuntimeError:
-        raise InvalidAuth
+    except RuntimeError as error:
+        raise InvalidAuth from error
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
