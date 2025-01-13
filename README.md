@@ -7,11 +7,10 @@ ThingsBoard API available at https://cml.seapraha.cz/.
 
 1. Install Home Assistant
 
-2. Install HACS
+1. Install HACS
 
-3. Install this integration using HACS (add it as a custom repository)
+1. Install this integration using HACS (add it as a custom repository)
 
-4. Configure the integration
+1. Configure the integration
 
 Search for **eSTUDNA** in the **Integrations** section of Home Assistant.
-
