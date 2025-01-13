@@ -109,9 +109,7 @@ class ThingsBoard:
         """Get current values"""
         url = f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries"
         params = {"keys": keys}
-        response = self.http_get(url, params=params)
-
-        return response
+        return self.http_get(url, params=params)
 
     def get_estudna_level(self, device_id: str):
         values = self.get_device_values(device_id, "ain1")
