@@ -1,11 +1,11 @@
 """eSTUDNA component for Home Assistant."""
+
 from functools import partial
 from typing import Dict
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (CONF_PASSWORD, CONF_USERNAME, LENGTH_METERS,
-                                 Platform)
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, LENGTH_METERS, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 

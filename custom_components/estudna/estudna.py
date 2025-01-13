@@ -4,6 +4,7 @@ CML - How to get value of water level for you eSTUDNA device
 2022-05-17 v1-01
 a) Project foundation
 """
+
 from datetime import datetime
 from typing import Dict, Optional
 

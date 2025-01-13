@@ -1,4 +1,5 @@
 """Config flow for estudna integration."""
+
 import logging
 from functools import partial
 from typing import Any
