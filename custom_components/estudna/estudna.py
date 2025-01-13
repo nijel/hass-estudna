@@ -5,7 +5,6 @@ a) Project foundation
 """
 
 from datetime import datetime
-from typing import Dict, Optional
 
 import jwt
 import requests
@@ -28,9 +27,9 @@ class ThingsBoard:
         self,
         method: str,
         url: str,
-        header: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, str]] = None,
-        data: Optional[Dict[str, str]] = None,
+        header: dict[str, str] | None = None,
+        params: dict[str, str] | None = None,
+        data: dict[str, str] | None = None,
         check_token: bool = True,
     ):
         if check_token and self.token_expired:
@@ -51,13 +50,13 @@ class ThingsBoard:
         response.raise_for_status()
         return response.json()
 
-    def http_post(self, url: str, data: Dict[str, str], check_token: bool = True):
+    def http_post(self, url: str, data: dict[str, str], check_token: bool = True):
         return self.http_request("post", url, data=data, check_token=check_token)
 
     def http_get(
         self,
         url: str,
-        params: Optional[Dict[str, str]] = None,
+        params: dict[str, str] | None = None,
         check_token: bool = True,
     ):
         header = {"X-Authorization": f"Bearer {self.userToken}"}

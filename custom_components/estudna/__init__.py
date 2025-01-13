@@ -1,7 +1,6 @@
 """eSTUDNA component for Home Assistant."""
 
 from functools import partial
-from typing import Dict
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
@@ -16,7 +15,7 @@ PLATFORMS = [Platform.SENSOR]
 
 
 class EStudnaSensor(SensorEntity):
-    def __init__(self, hass: HomeAssistant, thingsboard: ThingsBoard, device: Dict):
+    def __init__(self, hass: HomeAssistant, thingsboard: ThingsBoard, device: dict):
         self._thingsboard = thingsboard
         self._device = device
         self._attr_state_class = SensorStateClass.MEASUREMENT
