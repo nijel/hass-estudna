@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools==80.6.0"]
+requires = ["setuptools==80.7.1"]
 
 [project]
 name = "homeassistant-estudna"
