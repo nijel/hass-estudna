@@ -8,7 +8,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform, UnitOfLe
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN
+from .const import CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA, DOMAIN
 from .estudna import ThingsBoard
 
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
@@ -32,20 +32,29 @@ class EStudnaSensor(SensorEntity):
 
     @property
     def unique_id(self) -> str:
-        return self._device["id"]["id"]
+        # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
+        if isinstance(self._device["id"], dict):
+            return self._device["id"]["id"]
+        return self._device["id"]
 
     @property
     def device_info(self) -> DeviceInfo:
+        # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
+        device_id = (
+            self._device["id"]["id"]
+            if isinstance(self._device["id"], dict)
+            else self._device["id"]
+        )
         return DeviceInfo(
-            identifiers={(DOMAIN, self._device["id"]["id"])},
-            model=self._device["type"],
+            identifiers={(DOMAIN, device_id)},
+            model=self._device.get("type"),
             manufacturer="SEA Praha",
-            name=self._device["name"],
+            name=self._device.get("name"),
         )
 
     @property
     def name(self):
-        return self._device["name"]
+        return self._device.get("name")
 
     @property
     def state(self):
@@ -64,7 +73,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up estudna from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
-    tb = ThingsBoard()
+    device_type = entry.data.get(CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA)
+    tb = ThingsBoard(device_type=device_type)
     await hass.loop.run_in_executor(
         None, partial(tb.login, entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD])
     )

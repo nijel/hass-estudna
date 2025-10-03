@@ -12,9 +12,13 @@
       "user": {
         "data": {
           "password": "Password",
-          "username": "Username"
+          "username": "Username",
+          "device_type": "Device Type"
         },
-        "description": "Please enter the username and password you use to log into the CML app."
+        "data_description": {
+          "device_type": "Select your device model: eSTUDNA (older model using CML) or eSTUDNA2 (newer model using CML5)"
+        },
+        "description": "Please enter the username and password you use to log into the CML app, and select your device type."
       }
     }
   }
