@@ -114,3 +114,18 @@ class ThingsBoard:
     def get_estudna_level(self, device_id: str):
         values = self.get_device_values(device_id, "ain1")
         return values["ain1"][0]["value"]
+
+    def get_relay_state(self, device_id: str, relay: str):
+        """Get relay state (OUT1 or OUT2)"""
+        values = self.get_device_values(device_id, relay)
+        if relay in values and len(values[relay]) > 0:
+            return values[relay][0]["value"] == "true"
+        return False
+
+    def set_relay_state(self, device_id: str, relay: str, state: bool):
+        """Set relay state (OUT1 or OUT2)"""
+        method = "setDout1" if relay == "OUT1" else "setDout2"
+        data = {"method": method, "params": state}
+        url = f"/api/rpc/twoway/{device_id}"
+        header = {"X-Authorization": f"Bearer {self.userToken}"}
+        return self.http_request("post", url, header=header, data=data)
