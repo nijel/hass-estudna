@@ -25,13 +25,9 @@ class EStudnaSwitch(SwitchEntity):
         self._hass = hass
 
     async def async_update(self) -> None:
-        try:
-            self._state = await self._hass.async_add_executor_job(
-                self._thingsboard.get_relay_state, self.device_id, self._relay
-            )
-        except Exception as error:
-            _LOGGER.error("Failed to update relay %s state: %s", self._relay, error)
-            self._state = False
+        self._state = await self._hass.async_add_executor_job(
+            self._thingsboard.get_relay_state, self.device_id, self._relay
+        )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         await self._hass.async_add_executor_job(
