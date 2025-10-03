@@ -1,6 +1,6 @@
 {
   "domain": "estudna",
-  "name": "eSTUDNA",
+  "name": "eSTUDNA / eSTUDNA2",
   "codeowners": [
     "@nijel"
   ],
@@ -15,6 +15,6 @@
     "PyJWT[crypto]"
   ],
   "ssdp": [],
-  "version": "0.5.0",
+  "version": "0.6.0",
   "zeroconf": []
 }

@@ -1,7 +1,11 @@
 # eSTUDNA integration for Home Assistant
 
-Could based integration for [eSTUDNA](https://www.estudna.cz/) utilizing
-ThingsBoard API available at https://cml.seapraha.cz/.
+Cloud based integration for [eSTUDNA](https://www.estudna.cz/) devices utilizing
+ThingsBoard API.
+
+Supports both:
+- **eSTUDNA** (original model) - uses CML API at https://cml.seapraha.cz/
+- **eSTUDNA2** (new model) - uses CML5 API v2 at https://cml5.seapraha.cz/
 
 ## How to use
 
@@ -14,3 +18,16 @@ ThingsBoard API available at https://cml.seapraha.cz/.
 1. Configure the integration
 
 Search for **eSTUDNA** in the **Integrations** section of Home Assistant.
+
+When configuring, you'll be asked to select your device type (eSTUDNA or eSTUDNA2)
+and provide your CML app credentials.
+
+## Features
+
+### eSTUDNA (original)
+- Water level sensor
+- Two relay switches (OUT1, OUT2)
+
+### eSTUDNA2 (new)
+- Water level sensor
+- Relay switches (not yet supported)
