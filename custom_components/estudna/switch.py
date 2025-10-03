@@ -14,6 +14,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class EStudnaSwitch(SwitchEntity):
+    _attr_assumed_state = True
+
     def __init__(
         self, hass: HomeAssistant, thingsboard: ThingsBoard, device: dict, relay: str
     ):
