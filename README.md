@@ -4,6 +4,7 @@ Cloud based integration for [eSTUDNA](https://www.estudna.cz/) devices utilizing
 ThingsBoard API.
 
 Supports both:
+
 - **eSTUDNA** (original model) - uses CML API at https://cml.seapraha.cz/
 - **eSTUDNA2** (new model) - uses CML5 API v2 at https://cml5.seapraha.cz/
 
@@ -25,9 +26,11 @@ and provide your CML app credentials.
 ## Features
 
 ### eSTUDNA (original)
+
 - Water level sensor
 - Two relay switches (OUT1, OUT2)
 
 ### eSTUDNA2 (new)
+
 - Water level sensor
 - Two relay switches (OUT1, OUT2)
