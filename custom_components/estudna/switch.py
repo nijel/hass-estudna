@@ -92,11 +92,6 @@ async def async_setup_entry(
     entities = []
     tb = hass.data[DOMAIN][config_entry.entry_id]
 
-    # eSTUDNA2 doesn't support switches/relays yet
-    if tb.device_type == "estudna2":
-        async_add_entities(entities)
-        return
-
     devices = await hass.async_add_executor_job(tb.get_devices)
     for device in devices:
         for relay in ["OUT1", "OUT2"]:

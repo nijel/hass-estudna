@@ -30,4 +30,4 @@ and provide your CML app credentials.
 
 ### eSTUDNA2 (new)
 - Water level sensor
-- Relay switches (not yet supported)
+- Two relay switches (OUT1, OUT2)

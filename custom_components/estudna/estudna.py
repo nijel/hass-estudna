@@ -167,13 +167,29 @@ class ThingsBoard:
 
     def get_relay_state(self, device_id: str, relay: str):
         """Get relay state (OUT1 or OUT2)."""
-        # eSTUDNA2 doesn't support relays yet
-        if self.device_type == "estudna2":
-            return False
-
         # State keys are lowercase: dout1, dout2
         state_key = "dout1" if relay == "OUT1" else "dout2"
         values = self.get_device_values(device_id, state_key)
+
+        if self.device_type == "estudna2":
+            # eSTUDNA2 API returns telemetry data differently
+            if (
+                state_key in values
+                and isinstance(values[state_key], list)
+                and values[state_key]
+            ):
+                value_entry = values[state_key][0].get("value")
+                if value_entry:
+                    # Parse JSON-encoded value if needed
+                    try:
+                        val_json = json.loads(value_entry)
+                        return val_json.get("str") in {"1", "true"}
+                    except (ValueError, TypeError, json.JSONDecodeError):
+                        # Fallback to direct string comparison
+                        return value_entry in {"1", "true"}
+            return False
+
+        # Original eSTUDNA format
         if state_key in values and len(values[state_key]) > 0:
             # Values are string "1" (on) or "0" (off)
             return values[state_key][0]["value"] == "1"
@@ -181,12 +197,15 @@ class ThingsBoard:
 
     def set_relay_state(self, device_id: str, relay: str, state: bool):
         """Set relay state (OUT1 or OUT2)."""
-        # eSTUDNA2 doesn't support relays yet
-        if self.device_type == "estudna2":
-            return None
-
         method = "setDout1" if relay == "OUT1" else "setDout2"
         data = {"method": method, "params": state}
-        url = f"/api/rpc/twoway/{device_id}"
         header = {"X-Authorization": f"Bearer {self.userToken}"}
+
+        if self.device_type == "estudna2":
+            # eSTUDNA2 uses /device/{id}/rpc/twoway endpoint
+            url = f"/apiv2/device/{device_id}/rpc/twoway"
+        else:
+            # Original eSTUDNA uses /api/rpc/twoway/{id} endpoint
+            url = f"/api/rpc/twoway/{device_id}"
+
         return self.http_request("post", url, header=header, data=data)
