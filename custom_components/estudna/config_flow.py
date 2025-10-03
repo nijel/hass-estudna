@@ -81,9 +81,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            device_type = user_input.get(CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA)
-            title = "eSTUDNA2" if device_type == DEVICE_TYPE_ESTUDNA2 else "eSTUDNA"
-            return self.async_create_entry(title=title, data=user_input)
+            return self.async_create_entry(title="eSTUDNA", data=user_input)
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
