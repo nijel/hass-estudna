@@ -117,9 +117,12 @@ class ThingsBoard:
 
     def get_relay_state(self, device_id: str, relay: str):
         """Get relay state (OUT1 or OUT2)"""
-        values = self.get_device_values(device_id, relay)
-        if relay in values and len(values[relay]) > 0:
-            return values[relay][0]["value"] == "true"
+        # State keys are lowercase: dout1, dout2
+        state_key = "dout1" if relay == "OUT1" else "dout2"
+        values = self.get_device_values(device_id, state_key)
+        if state_key in values and len(values[state_key]) > 0:
+            # Values are string "1" (on) or "0" (off)
+            return values[state_key][0]["value"] == "1"
         return False
 
     def set_relay_state(self, device_id: str, relay: str, state: bool):
