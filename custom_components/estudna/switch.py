@@ -47,24 +47,37 @@ class EStudnaSwitch(SwitchEntity):
 
     @property
     def device_id(self) -> str:
-        return self._device["id"]["id"]
+        # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
+        if isinstance(self._device["id"], dict):
+            return self._device["id"]["id"]
+        return self._device["id"]
 
     @property
     def unique_id(self) -> str:
-        return f"{self._device['id']['id']}_{self._relay}"
+        device_id = (
+            self._device["id"]["id"]
+            if isinstance(self._device["id"], dict)
+            else self._device["id"]
+        )
+        return f"{device_id}_{self._relay}"
 
     @property
     def device_info(self) -> DeviceInfo:
+        device_id = (
+            self._device["id"]["id"]
+            if isinstance(self._device["id"], dict)
+            else self._device["id"]
+        )
         return DeviceInfo(
-            identifiers={(DOMAIN, self._device["id"]["id"])},
-            model=self._device["type"],
+            identifiers={(DOMAIN, device_id)},
+            model=self._device.get("type"),
             manufacturer="SEA Praha",
-            name=self._device["name"],
+            name=self._device.get("name"),
         )
 
     @property
     def name(self):
-        return f"{self._device['name']} {self._relay}"
+        return f"{self._device.get('name')} {self._relay}"
 
     @property
     def is_on(self):
@@ -78,6 +91,7 @@ async def async_setup_entry(
 ):
     entities = []
     tb = hass.data[DOMAIN][config_entry.entry_id]
+
     devices = await hass.async_add_executor_job(tb.get_devices)
     for device in devices:
         for relay in ["OUT1", "OUT2"]:
