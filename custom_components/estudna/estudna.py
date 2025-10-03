@@ -1,4 +1,4 @@
-"""CML - How to get value of water level for you eSTUDNA device
+"""CML - How to get value of water level for you eSTUDNA device.
 
 2022-05-17 v1-01
 a) Project foundation
@@ -65,7 +65,7 @@ class ThingsBoard:
         )
 
     def login(self, username: str, password: str):
-        """Login"""
+        """Login."""
         # Get access and refresh tokens
         url = "/api/auth/login"
         response = self.http_post(
@@ -80,7 +80,7 @@ class ThingsBoard:
         self.customerId = response["customerId"]["id"]
 
     def refresh_token(self):
-        """Refresh JWT token"""
+        """Refresh JWT token."""
         url = "/api/auth/token"
         response = self.http_post(
             url, data={"refreshToken": self.refreshToken}, check_token=False
@@ -90,23 +90,23 @@ class ThingsBoard:
 
     @property
     def token_expired(self):
-        """Check JWT token expiry"""
+        """Check JWT token expiry."""
         this_jwt = jwt.decode(self.userToken, options={"verify_signature": False})
         expiry_time = datetime.fromtimestamp(this_jwt["exp"])
         return expiry_time <= datetime.now()
 
     def get_devices(self):
-        """List devices"""
+        """List devices."""
         url = f"/api/customer/{self.customerId}/devices"
         params = {"pageSize": 100, "page": 0}
         response = self.http_get(url, params=params)
         if response["totalElements"] < 1:
-            raise Exception("No device has not been found!")
+            raise Exception("No device has not been found!")  # noqa: TRY002
 
         return response["data"]
 
     def get_device_values(self, device_id: str, keys: str):
-        """Get current values"""
+        """Get current values."""
         url = f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries"
         params = {"keys": keys}
         return self.http_get(url, params=params)
@@ -116,7 +116,7 @@ class ThingsBoard:
         return values["ain1"][0]["value"]
 
     def get_relay_state(self, device_id: str, relay: str):
-        """Get relay state (OUT1 or OUT2)"""
+        """Get relay state (OUT1 or OUT2)."""
         # State keys are lowercase: dout1, dout2
         state_key = "dout1" if relay == "OUT1" else "dout2"
         values = self.get_device_values(device_id, state_key)
@@ -126,7 +126,7 @@ class ThingsBoard:
         return False
 
     def set_relay_state(self, device_id: str, relay: str, state: bool):
-        """Set relay state (OUT1 or OUT2)"""
+        """Set relay state (OUT1 or OUT2)."""
         method = "setDout1" if relay == "OUT1" else "setDout2"
         data = {"method": method, "params": state}
         url = f"/api/rpc/twoway/{device_id}"
