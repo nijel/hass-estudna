@@ -14,8 +14,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class EStudnaSwitch(SwitchEntity):
-    _attr_assumed_state = True
-
     def __init__(
         self, hass: HomeAssistant, thingsboard: ThingsBoard, device: dict, relay: str
     ):
@@ -39,12 +37,14 @@ class EStudnaSwitch(SwitchEntity):
             self._thingsboard.set_relay_state, self.device_id, self._relay, True
         )
         self._state = True
+        self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self._hass.async_add_executor_job(
             self._thingsboard.set_relay_state, self.device_id, self._relay, False
         )
         self._state = False
+        self.async_write_ha_state()
 
     @property
     def device_id(self) -> str:
