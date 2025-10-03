@@ -11,7 +11,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from .const import DOMAIN
 from .estudna import ThingsBoard
 
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
 
 
 class EStudnaSensor(SensorEntity):
