@@ -1,0 +1,25 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Zařízení je již nakonfigurováno"
+    },
+    "error": {
+      "cannot_connect": "Připojení se nezdařilo",
+      "invalid_auth": "Neplatné přihlašovací údaje",
+      "unknown": "Neočekávaná chyba"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "password": "Heslo",
+          "username": "Uživatelské jméno",
+          "device_type": "Typ zařízení"
+        },
+        "data_description": {
+          "device_type": "Vyberte model vašeho zařízení: eSTUDNA (starší model používající CML) nebo eSTUDNA2 (novější model používající CML5)"
+        },
+        "description": "Zadejte uživatelské jméno a heslo, které používáte pro přihlášení do aplikace CML, a vyberte typ zařízení."
+      }
+    }
+  }
+}

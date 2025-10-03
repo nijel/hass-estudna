@@ -10,6 +10,11 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .const import CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA, DEVICE_TYPE_ESTUDNA2, DOMAIN
 from .estudna import ThingsBoard
@@ -20,8 +25,14 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_USERNAME): str,
         vol.Required(CONF_PASSWORD): str,
-        vol.Required(CONF_DEVICE_TYPE, default=DEVICE_TYPE_ESTUDNA): vol.In(
-            [DEVICE_TYPE_ESTUDNA, DEVICE_TYPE_ESTUDNA2]
+        vol.Required(CONF_DEVICE_TYPE, default=DEVICE_TYPE_ESTUDNA): SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    {"value": DEVICE_TYPE_ESTUDNA, "label": "eSTUDNA"},
+                    {"value": DEVICE_TYPE_ESTUDNA2, "label": "eSTUDNA2"},
+                ],
+                mode=SelectSelectorMode.DROPDOWN,
+            )
         ),
     }
 )
