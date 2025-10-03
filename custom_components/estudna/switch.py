@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any
 
@@ -36,6 +37,7 @@ class EStudnaSwitch(SwitchEntity):
         await self._hass.async_add_executor_job(
             self._thingsboard.set_relay_state, self.device_id, self._relay, True
         )
+        await asyncio.sleep(2)
         self._state = True
         self.async_write_ha_state()
 
@@ -43,6 +45,7 @@ class EStudnaSwitch(SwitchEntity):
         await self._hass.async_add_executor_job(
             self._thingsboard.set_relay_state, self.device_id, self._relay, False
         )
+        await asyncio.sleep(2)
         self._state = False
         self.async_write_ha_state()
 
