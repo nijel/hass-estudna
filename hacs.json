@@ -1,5 +1,8 @@
 {
-  "name": "hass-estudna",
-  "country": "CZ",
-  "render_readme": true
+  "name": "eSTUDNA",
+  "content_in_root": false,
+  "country": [
+    "CZ"
+  ],
+  "homeassistant": "2025.1.0"
 }
