@@ -13,6 +13,9 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+# Time to wait for relay to settle after state change
+RELAY_SETTLE_TIME = 2
+
 
 class EStudnaSwitch(CoordinatorEntity, SwitchEntity):
     """Representation of an eSTUDNA switch."""
@@ -23,19 +26,22 @@ class EStudnaSwitch(CoordinatorEntity, SwitchEntity):
         self._device = device
         self._relay = relay
 
-    @property
-    def device_id(self) -> str:
-        """Return device ID."""
+    def _get_device_id(self) -> str:
+        """Get device ID from device dict."""
         # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
         if isinstance(self._device["id"], dict):
             return self._device["id"]["id"]
         return self._device["id"]
 
     @property
+    def device_id(self) -> str:
+        """Return device ID."""
+        return self._get_device_id()
+
+    @property
     def unique_id(self) -> str:
         """Return unique ID."""
-        device_id = self.device_id
-        return f"{device_id}_{self._relay}"
+        return f"{self._get_device_id()}_{self._relay}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -63,7 +69,7 @@ class EStudnaSwitch(CoordinatorEntity, SwitchEntity):
         await self.coordinator.thingsboard.set_relay_state(
             self.device_id, self._relay, True
         )
-        await asyncio.sleep(2)
+        await asyncio.sleep(RELAY_SETTLE_TIME)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -71,7 +77,7 @@ class EStudnaSwitch(CoordinatorEntity, SwitchEntity):
         await self.coordinator.thingsboard.set_relay_state(
             self.device_id, self._relay, False
         )
-        await asyncio.sleep(2)
+        await asyncio.sleep(RELAY_SETTLE_TIME)
         await self.coordinator.async_request_refresh()
 
 

@@ -23,20 +23,22 @@ class EStudnaSensor(CoordinatorEntity, SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfLength.METERS
 
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID."""
+    def _get_device_id(self) -> str:
+        """Get device ID from device dict."""
         # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
         if isinstance(self._device["id"], dict):
             return self._device["id"]["id"]
         return self._device["id"]
 
     @property
+    def unique_id(self) -> str:
+        """Return unique ID."""
+        return self._get_device_id()
+
+    @property
     def device_id(self) -> str:
         """Return device ID."""
-        if isinstance(self._device["id"], dict):
-            return self._device["id"]["id"]
-        return self._device["id"]
+        return self._get_device_id()
 
     @property
     def device_info(self) -> DeviceInfo:
