@@ -7,8 +7,8 @@ a) Project foundation
 import json
 from datetime import datetime
 
+import aiohttp
 import jwt
-import requests
 
 # ----------------------------------------------------------------------------
 # --- Code
@@ -18,7 +18,9 @@ import requests
 class ThingsBoard:
     """CML ThinksBoard wrapper."""
 
-    def __init__(self, device_type: str = "estudna"):
+    def __init__(
+        self, device_type: str = "estudna", session: aiohttp.ClientSession | None = None
+    ):
         """Initialize ThingsBoard with device type."""
         self.device_type = device_type
         if device_type == "estudna2":
@@ -29,8 +31,22 @@ class ThingsBoard:
         self.refreshToken = None
         self.customerId = None
         self.user_id = None
+        self._session = session
+        self._own_session = session is None
 
-    def http_request(
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """Get or create aiohttp session."""
+        if self._session is None:
+            self._session = aiohttp.ClientSession()
+        return self._session
+
+    async def close(self):
+        """Close the aiohttp session if we own it."""
+        if self._own_session and self._session is not None:
+            await self._session.close()
+            self._session = None
+
+    async def http_request(
         self,
         method: str,
         url: str,
@@ -40,7 +56,7 @@ class ThingsBoard:
         check_token: bool = True,
     ):
         if check_token and self.token_expired:
-            self.refresh_token()
+            await self.refresh_token()
         if header is None:
             header = {}
 
@@ -51,27 +67,28 @@ class ThingsBoard:
             }
         )
 
-        response = requests.request(
+        session = await self._get_session()
+        async with session.request(
             method, f"{self.server}{url}", headers=header, params=params, json=data
-        )
-        response.raise_for_status()
-        return response.json()
+        ) as response:
+            response.raise_for_status()
+            return await response.json()
 
-    def http_post(self, url: str, data: dict[str, str], check_token: bool = True):
-        return self.http_request("post", url, data=data, check_token=check_token)
+    async def http_post(self, url: str, data: dict[str, str], check_token: bool = True):
+        return await self.http_request("post", url, data=data, check_token=check_token)
 
-    def http_get(
+    async def http_get(
         self,
         url: str,
         params: dict[str, str] | None = None,
         check_token: bool = True,
     ):
         header = {"X-Authorization": f"Bearer {self.userToken}"}
-        return self.http_request(
+        return await self.http_request(
             "get", url, header=header, params=params, check_token=check_token
         )
 
-    def login(self, username: str, password: str):
+    async def login(self, username: str, password: str):
         """Login."""
         # Get access and refresh tokens
         if self.device_type == "estudna2":
@@ -79,7 +96,7 @@ class ThingsBoard:
         else:
             url = "/api/auth/login"
 
-        response = self.http_post(
+        response = await self.http_post(
             url, data={"username": username, "password": password}, check_token=False
         )
         self.userToken = response["token"]
@@ -92,17 +109,17 @@ class ThingsBoard:
                 raise ValueError("Login failed: missing user_id")
         else:
             url = "/api/auth/user"
-            response = self.http_get(url)
+            response = await self.http_get(url)
             self.customerId = response["customerId"]["id"]
 
-    def refresh_token(self):
+    async def refresh_token(self):
         """Refresh JWT token."""
         if self.device_type == "estudna2":
             url = "/apiv2/auth/token"
         else:
             url = "/api/auth/token"
 
-        response = self.http_post(
+        response = await self.http_post(
             url, data={"refreshToken": self.refreshToken}, check_token=False
         )
         self.userToken = response["token"]
@@ -115,20 +132,20 @@ class ThingsBoard:
         expiry_time = datetime.fromtimestamp(this_jwt["exp"])
         return expiry_time <= datetime.now()
 
-    def get_devices(self):
+    async def get_devices(self):
         """List devices."""
         if self.device_type == "estudna2":
             if not self.user_id:
                 raise ValueError("No user_id. Please login first.")
             url = f"/apiv2/user/{self.user_id}/devices"
-            response = self.http_get(url)
+            response = await self.http_get(url)
             devices = (
                 response if isinstance(response, list) else response.get("data", [])
             )
         else:
             url = f"/api/customer/{self.customerId}/devices"
             params = {"pageSize": 100, "page": 0}
-            response = self.http_get(url, params=params)
+            response = await self.http_get(url, params=params)
             devices = response.get("data", [])
 
         if not devices:
@@ -136,17 +153,17 @@ class ThingsBoard:
 
         return devices
 
-    def get_device_values(self, device_id: str, keys: str):
+    async def get_device_values(self, device_id: str, keys: str):
         """Get current values."""
         if self.device_type == "estudna2":
             url = f"/apiv2/device/{device_id}/latest"
-            return self.http_get(url)
+            return await self.http_get(url)
         url = f"/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries"
         params = {"keys": keys}
-        return self.http_get(url, params=params)
+        return await self.http_get(url, params=params)
 
-    def get_estudna_level(self, device_id: str):
-        values = self.get_device_values(device_id, "ain1")
+    async def get_estudna_level(self, device_id: str):
+        values = await self.get_device_values(device_id, "ain1")
 
         if self.device_type == "estudna2":
             # eSTUDNA2 uses a different format with JSON-encoded values
@@ -165,11 +182,11 @@ class ThingsBoard:
         # Original eSTUDNA format
         return values["ain1"][0]["value"]
 
-    def get_relay_state(self, device_id: str, relay: str):
+    async def get_relay_state(self, device_id: str, relay: str):
         """Get relay state (OUT1 or OUT2)."""
         # State keys are lowercase: dout1, dout2
         state_key = "dout1" if relay == "OUT1" else "dout2"
-        values = self.get_device_values(device_id, state_key)
+        values = await self.get_device_values(device_id, state_key)
 
         if self.device_type == "estudna2":
             # eSTUDNA2 API returns telemetry data differently
@@ -195,7 +212,7 @@ class ThingsBoard:
             return values[state_key][0]["value"] == "1"
         return False
 
-    def set_relay_state(self, device_id: str, relay: str, state: bool):
+    async def set_relay_state(self, device_id: str, relay: str, state: bool):
         """Set relay state (OUT1 or OUT2)."""
         method = "setDout1" if relay == "OUT1" else "setDout2"
         data = {"method": method, "params": state}
@@ -208,4 +225,4 @@ class ThingsBoard:
             # Original eSTUDNA uses /api/rpc/twoway/{id} endpoint
             url = f"/api/rpc/twoway/{device_id}"
 
-        return self.http_request("post", url, header=header, data=data)
+        return await self.http_request("post", url, header=header, data=data)
