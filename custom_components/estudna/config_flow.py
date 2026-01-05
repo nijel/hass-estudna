@@ -1,7 +1,6 @@
 """Config flow for estudna integration."""
 
 import logging
-from functools import partial
 from typing import Any
 
 import voluptuous as vol
@@ -10,6 +9,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
@@ -48,9 +48,12 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     password = data[CONF_PASSWORD]
     device_type = data.get(CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA)
 
-    tb = ThingsBoard(device_type=device_type)
+    # Get shared aiohttp session
+    session = async_get_clientsession(hass)
+
+    tb = ThingsBoard(device_type=device_type, session=session)
     try:
-        await hass.loop.run_in_executor(None, partial(tb.login, username, password))
+        await tb.login(username, password)
     except (RuntimeError, ValueError) as error:
         raise InvalidAuth from error
 

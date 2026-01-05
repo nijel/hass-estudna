@@ -1,72 +1,68 @@
 """eSTUDNA component for Home Assistant."""
 
-from functools import partial
+import logging
+from datetime import timedelta
 
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform, UnitOfLength
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA, DOMAIN
 from .estudna import ThingsBoard
 
+_LOGGER = logging.getLogger(__name__)
+
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
+SCAN_INTERVAL = timedelta(seconds=60)
 
 
-class EStudnaSensor(SensorEntity):
-    def __init__(self, hass: HomeAssistant, thingsboard: ThingsBoard, device: dict):
-        self._thingsboard = thingsboard
-        self._device = device
-        self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._state = None
-        self._hass = hass
+class EStudnaCoordinator(DataUpdateCoordinator):
+    """Class to manage fetching eSTUDNA data."""
 
-    async def async_update(self) -> None:
+    def __init__(
+        self, hass: HomeAssistant, thingsboard: ThingsBoard, devices: list[dict]
+    ):
+        """Initialize coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=DOMAIN,
+            update_interval=SCAN_INTERVAL,
+        )
+        self.thingsboard = thingsboard
+        self.devices = devices
+
+    async def _async_update_data(self):
+        """Fetch data from API."""
+        data = {}
         try:
-            self._state = await self._hass.async_add_executor_job(
-                self._thingsboard.get_estudna_level, self.unique_id
-            )
-        except IndexError:
-            self._state = None
+            for device in self.devices:
+                device_id = (
+                    device["id"]["id"]
+                    if isinstance(device["id"], dict)
+                    else device["id"]
+                )
+                # Fetch sensor level
+                try:
+                    level = await self.thingsboard.get_estudna_level(device_id)
+                    data[f"{device_id}_level"] = level
+                except (IndexError, KeyError):
+                    data[f"{device_id}_level"] = None
 
-    @property
-    def unique_id(self) -> str:
-        # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
-        if isinstance(self._device["id"], dict):
-            return self._device["id"]["id"]
-        return self._device["id"]
+                # Fetch relay states
+                for relay in ["OUT1", "OUT2"]:
+                    try:
+                        state = await self.thingsboard.get_relay_state(device_id, relay)
+                        data[f"{device_id}_{relay}"] = state
+                    except (KeyError, IndexError) as err:
+                        _LOGGER.debug("Error fetching relay %s state: %s", relay, err)
+                        data[f"{device_id}_{relay}"] = False
+        except Exception as err:
+            raise UpdateFailed(f"Error communicating with API: {err}") from err
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
-        device_id = (
-            self._device["id"]["id"]
-            if isinstance(self._device["id"], dict)
-            else self._device["id"]
-        )
-        return DeviceInfo(
-            identifiers={(DOMAIN, device_id)},
-            model=self._device.get("type"),
-            manufacturer="SEA Praha",
-            name=self._device.get("name"),
-        )
-
-    @property
-    def name(self):
-        return self._device.get("name")
-
-    @property
-    def state(self):
-        return self._state
-
-    @property
-    def available(self):
-        return self._state is not None
-
-    @property
-    def unit_of_measurement(self) -> str:
-        return UnitOfLength.METERS
+        return data
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -74,11 +70,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     device_type = entry.data.get(CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA)
-    tb = ThingsBoard(device_type=device_type)
-    await hass.loop.run_in_executor(
-        None, partial(tb.login, entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD])
-    )
-    hass.data[DOMAIN][entry.entry_id] = tb
+
+    # Get shared aiohttp session
+    session = async_get_clientsession(hass)
+
+    # Initialize ThingsBoard with async session
+    tb = ThingsBoard(device_type=device_type, session=session)
+
+    # Login using async method
+    await tb.login(entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD])
+
+    # Get devices
+    devices = await tb.get_devices()
+
+    # Create coordinator
+    coordinator = EStudnaCoordinator(hass, tb, devices)
+
+    # Fetch initial data
+    await coordinator.async_config_entry_first_refresh()
+
+    # Store coordinator
+    hass.data[DOMAIN][entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -88,6 +100,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id).close()
+        coordinator = hass.data[DOMAIN].pop(entry.entry_id)
+        await coordinator.thingsboard.close()
 
     return unload_ok
