@@ -3,6 +3,7 @@
 import logging
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
@@ -54,6 +55,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     tb = ThingsBoard(device_type=device_type, session=session)
     try:
         await tb.login(username, password)
+    except aiohttp.ClientError as error:
+        raise CannotConnect from error
     except (RuntimeError, ValueError) as error:
         raise InvalidAuth from error
 

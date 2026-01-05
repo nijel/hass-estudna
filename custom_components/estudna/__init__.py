@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import CONF_DEVICE_TYPE, DEVICE_TYPE_ESTUDNA, DOMAIN
 from .estudna import ThingsBoard
@@ -16,6 +16,16 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
 SCAN_INTERVAL = timedelta(seconds=60)
+
+
+def get_device_id(device: dict) -> str:
+    """Extract device ID from device dict.
+
+    eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"].
+    """
+    if isinstance(device["id"], dict):
+        return device["id"]["id"]
+    return device["id"]
 
 
 class EStudnaCoordinator(DataUpdateCoordinator):
@@ -37,30 +47,29 @@ class EStudnaCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API."""
         data = {}
-        try:
-            for device in self.devices:
-                device_id = (
-                    device["id"]["id"]
-                    if isinstance(device["id"], dict)
-                    else device["id"]
-                )
-                # Fetch sensor level
-                try:
-                    level = await self.thingsboard.get_estudna_level(device_id)
-                    data[f"{device_id}_level"] = level
-                except (IndexError, KeyError):
-                    data[f"{device_id}_level"] = None
+        for device in self.devices:
+            device_id = get_device_id(device)
+            # Fetch sensor level
+            try:
+                level = await self.thingsboard.get_estudna_level(device_id)
+                data[f"{device_id}_level"] = level
+            except Exception as err:  # noqa: BLE001
+                _LOGGER.debug("Error fetching level for device %s: %s", device_id, err)
+                data[f"{device_id}_level"] = None
 
-                # Fetch relay states
-                for relay in ["OUT1", "OUT2"]:
-                    try:
-                        state = await self.thingsboard.get_relay_state(device_id, relay)
-                        data[f"{device_id}_{relay}"] = state
-                    except (KeyError, IndexError) as err:
-                        _LOGGER.debug("Error fetching relay %s state: %s", relay, err)
-                        data[f"{device_id}_{relay}"] = False
-        except Exception as err:
-            raise UpdateFailed(f"Error communicating with API: {err}") from err
+            # Fetch relay states
+            for relay in ["OUT1", "OUT2"]:
+                try:
+                    state = await self.thingsboard.get_relay_state(device_id, relay)
+                    data[f"{device_id}_{relay}"] = state
+                except Exception as err:  # noqa: BLE001
+                    _LOGGER.debug(
+                        "Error fetching relay %s state for device %s: %s",
+                        relay,
+                        device_id,
+                        err,
+                    )
+                    data[f"{device_id}_{relay}"] = False
 
         return data
 

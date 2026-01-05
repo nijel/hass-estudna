@@ -9,6 +9,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from . import get_device_id
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,30 +26,19 @@ class EStudnaSwitch(CoordinatorEntity, SwitchEntity):
         super().__init__(coordinator)
         self._device = device
         self._relay = relay
-
-    def _get_device_id(self) -> str:
-        """Get device ID from device dict."""
-        # eSTUDNA2 has device["id"] as string, eSTUDNA has device["id"]["id"]
-        if isinstance(self._device["id"], dict):
-            return self._device["id"]["id"]
-        return self._device["id"]
+        self._device_id = get_device_id(device)
+        self._attr_unique_id = f"{self._device_id}_{relay}"
 
     @property
     def device_id(self) -> str:
         """Return device ID."""
-        return self._get_device_id()
-
-    @property
-    def unique_id(self) -> str:
-        """Return unique ID."""
-        return f"{self._get_device_id()}_{self._relay}"
+        return self._device_id
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return device info."""
-        device_id = self.device_id
         return DeviceInfo(
-            identifiers={(DOMAIN, device_id)},
+            identifiers={(DOMAIN, self._device_id)},
             model=self._device.get("type"),
             manufacturer="SEA Praha",
             name=self._device.get("name"),
@@ -62,21 +52,39 @@ class EStudnaSwitch(CoordinatorEntity, SwitchEntity):
     @property
     def is_on(self):
         """Return true if the switch is on."""
-        return self.coordinator.data.get(f"{self.device_id}_{self._relay}", False)
+        return self.coordinator.data.get(f"{self._device_id}_{self._relay}", False)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
-        await self.coordinator.thingsboard.set_relay_state(
-            self.device_id, self._relay, True
-        )
+        try:
+            await self.coordinator.thingsboard.set_relay_state(
+                self._device_id, self._relay, True
+            )
+        except Exception as err:
+            _LOGGER.error(
+                "Failed to turn on relay %s for device %s: %s",
+                self._relay,
+                self._device_id,
+                err,
+            )
+            raise
         await asyncio.sleep(RELAY_SETTLE_TIME)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
-        await self.coordinator.thingsboard.set_relay_state(
-            self.device_id, self._relay, False
-        )
+        try:
+            await self.coordinator.thingsboard.set_relay_state(
+                self._device_id, self._relay, False
+            )
+        except Exception as err:
+            _LOGGER.error(
+                "Failed to turn off relay %s for device %s: %s",
+                self._relay,
+                self._device_id,
+                err,
+            )
+            raise
         await asyncio.sleep(RELAY_SETTLE_TIME)
         await self.coordinator.async_request_refresh()
 
