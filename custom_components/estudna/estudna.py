@@ -50,6 +50,7 @@ class ThingsBoard:
         self,
         method: str,
         url: str,
+        *,
         header: dict[str, str] | None = None,
         params: dict[str, str] | None = None,
         data: dict[str, str] | None = None,
